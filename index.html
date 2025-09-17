@@ -9,14 +9,19 @@
       font-family: Arial, sans-serif;
       text-align: center;
       background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    h1, h2 {
+      color: #333;
     }
     video, canvas, img {
-      max-width: 90%;
+      max-width: 95%;
       margin: 10px;
       border: 1px solid #ccc;
       border-radius: 10px;
     }
-    button {
+    button, input[type="file"] {
       margin: 10px;
       padding: 10px 20px;
       border: none;
@@ -43,7 +48,7 @@
 
   <!-- Live Camera -->
   <h2>Live Camera Scan</h2>
-  <video id="video" autoplay></video>
+  <video id="video" autoplay playsinline></video>
   <canvas id="canvas"></canvas>
   <canvas id="result"></canvas>
 
@@ -83,7 +88,9 @@
     const canvasCtx = canvas.getContext("2d");
     const resultCtx = result.getContext("2d");
 
-    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" } // Use rear cam by default
+    }).then((stream) => {
       video.srcObject = stream;
       video.onloadedmetadata = () => {
         video.play();
@@ -99,6 +106,9 @@
           resultCtx.drawImage(resultCanvas, 0, 0);
         }, 100);
       };
+    }).catch((err) => {
+      console.error("Camera error:", err);
+      alert("Unable to access camera. Please allow permissions.");
     });
   </script>
 </body>
