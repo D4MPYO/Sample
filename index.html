@@ -1,21 +1,51 @@
-<html>
-  <body>
-    <script src="https://docs.opencv.org/4.7.0/opencv.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/ColonelParrot/jscanify@master/src/jscanify.min.js"></script>
-    <img src="https://colonelparrot.github.io/jscanify/images/test/test.png" crossorigin="anonymous" id="image" />
-    <script>
-      cv.onRuntimeInitialized = function() {
-        function scan() {
-          const scanner = new jscanify()
-          const scanned = scanner.extractPaper(image, 386, 500)
-          document.body.appendChild(scanned)
-        }
-        image.onload = scan
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>My Scanner App</title>
+</head>
+<body style="margin: 0">
+<button id="start-scanning">Start scanning</button>
+<button id="export-pdf">Export PDF</button>
+<script type="module">
+    import "./scanbot-web-sdk/bundle/ScanbotSDK.ui2.min.js";
+    const sdk = await ScanbotSDK.initialize({
+        enginePath: "scanbot-web-sdk/bundle/bin/complete/"
+    });
 
-        if (image.complete) {
-          scan()
+    let scanResult;
+
+    document.getElementById("start-scanning").addEventListener("click", async () => {
+        const config = new ScanbotSDK.UI.Config.DocumentScanningFlow();
+        scanResult = await ScanbotSDK.UI.createDocumentScanner(config);
+    });
+
+    document.getElementById("export-pdf").addEventListener("click", async () => {
+        const pages = scanResult?.document?.pages;
+        if (!pages || !pages.length) {
+            alert("Please scan a document first.");
+            return;
         }
-      }
-    </script>
-  </body>
+
+        const options = { pageSize: "A4", pageDirection: "PORTRAIT", pageFit: "FIT_IN", dpi: 72, jpegQuality: 80 };
+        const bytes = await scanResult?.document?.createPdf(options);
+
+        function saveBytes(data, name) {
+            const extension = name.split(".")[1];
+            const a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+            const blob = new Blob([data], {type: `application/${extension}`});
+            const url = window.URL.createObjectURL(blob);
+            a.href = url;
+            a.download = name;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        saveBytes(bytes, "generated.pdf");
+    });
+</script>
+</body>
 </html>
